@@ -33,7 +33,7 @@ weights = [0.3,0.15,0.55]
 # num of sims
 mcSims = 50
 # time frame in days
-T = 5*365
+T = 5*252
 
 # create array for storing information
 meanM = np.full(shape=(T, len(weights)), fill_value=meanReturns)
@@ -42,7 +42,7 @@ meanM = meanM.T
 
 # defining sim martix size (how many days into the future, and how many monte carlo simulations)
 portfolioSims = np.full(shape=(T, mcSims), fill_value=0.0)
-
+portfolioRtn = np.full(shape=(T, mcSims), fill_value=0.0)
 #portfolio size at start of simulation
 initialPortfolio = 120000.0
 
@@ -66,6 +66,7 @@ for m in range(0, mcSims):
     # daily portfolio return = weights,dailyReturns.T
     # cumprod calcs the cumlative return (compounding them) so the values can be multiplied by the inital value to calc the portfolio value.
     portfolioSims[:, m] = np.cumprod(np.inner(weights,dailyReturns.T)+1)*initialPortfolio
+    portfolioRtn[:,m] = np.cumprod(np.inner(weights,dailyReturns.T)+1)
 
 # plot each simulation
 plt.plot(portfolioSims)
@@ -80,6 +81,7 @@ percentPortfolio = (meanPortfolio/initialPortfolio - 1)*100
 print(meanPortfolio)
 print(percentPortfolio)
 
+
 #VaR
 # get the final portfolio value of all the monte carlo sims
 portfolioResults = pd.Series(portfolioSims[-1,:])
@@ -91,17 +93,31 @@ alpha = 100-CI
 # calc the portfolio value at the alpha quartile
 VaR =  np.percentile(portfolioResults, alpha) - initialPortfolio
 
+VaRthroughout = (np.percentile(portfolioRtn, alpha) - 1)*100
+
+# loss from inital portfolio value for the worst 5% quartile.
+btmRtnQtl = portfolioRtn[portfolioRtn <= np.percentile(portfolioRtn, alpha)]
+
+# average loss from inital portfolio value for the worst 5% of outcomes.
+CVaRthroughout = (np.mean(btmRtnQtl) - 1)*100
+
 # calc portfolio value on ave of alpha quartile
 # btm alpha quartile
 btmAlphaQuartile = portfolioResults[portfolioResults <= np.percentile(portfolioResults, alpha)]
+
 # ave of btm alpha quartile (CVaR)
 CVaR =  np.mean(btmAlphaQuartile) - initialPortfolio
 
 # 95% confident that the final portfolio value will be greater than or equal to
-print('VaR ${}'.format(round(VaR, 2)))
+print('\n')
+print('VaR change in ending portfolio Value ${}'.format(round(VaR, 2)))
+print('VaR percentage change from initial value: {}%'.format(round(VaRthroughout, 2)))
 
-# average final portfolio value for the worst 5% of outcomes.
-print('CVaR ${}'.format(round(CVaR, 2)))
+print('\n')
+
+#average final portfolio value for the worst 5% of outcomes.
+print('CVaR change in ending portfolio Value ${}'.format(round(CVaR, 2)))
+print('CVaR percentage change from initial value: {}%'.format(round(CVaRthroughout, 2)))
 
 
 
