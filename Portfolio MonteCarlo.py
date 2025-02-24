@@ -79,3 +79,29 @@ meanPortfolio = np.mean(portfolioSims)
 percentPortfolio = (meanPortfolio/initialPortfolio - 1)*100
 print(meanPortfolio)
 print(percentPortfolio)
+
+#VaR
+# get the final portfolio value of all the monte carlo sims
+portfolioResults = pd.Series(portfolioSims[-1,:])
+
+#confidence interval and alpha
+CI = 95
+alpha = 100-CI
+
+# calc the portfolio value at the alpha quartile
+VaR =  np.percentile(portfolioResults, alpha) - initialPortfolio
+
+# calc portfolio value on ave of alpha quartile
+# btm alpha quartile
+btmAlphaQuartile = portfolioResults[portfolioResults <= np.percentile(portfolioResults, alpha)]
+# ave of btm alpha quartile (CVaR)
+CVaR =  np.mean(btmAlphaQuartile) - initialPortfolio
+
+# 95% confident that the final portfolio value will be greater than or equal to
+print('VaR ${}'.format(round(VaR, 2)))
+
+# average final portfolio value for the worst 5% of outcomes.
+print('CVaR ${}'.format(round(CVaR, 2)))
+
+
+
